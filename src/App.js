@@ -7,14 +7,14 @@ import { DndProvider } from "react-dnd";
 
 export default function App() {
   const [spiritActs, setSpiritActs] = useState();
-  const [board, setBoard] = useState([]);
 
-  const sprite = {
-    name: "bitcoin",
-    url: "https://www.seekpng.com/png/detail/9-92064_sticker-2-bitcoin-store-bitcoin-b.png",
-    path: [],
-  };
-  const [spirit, setSpirit] = useState([sprite]);
+  const [spirit, setSpirit] = useState([
+    {
+      name: "bitcoin",
+      url: "https://www.seekpng.com/png/detail/9-92064_sticker-2-bitcoin-store-bitcoin-b.png",
+      path: [],
+    },
+  ]);
 
   const addSpiritAction = (index) => {
     setSpiritActs(spirit[index]);
@@ -25,12 +25,6 @@ export default function App() {
       setSpiritActs();
     }
     setSpirit((prevSpirits) => prevSpirits.filter((_, i) => i !== index));
-  };
-
-  const handleDrop = (item, name) => {
-    board.push(item);
-    setBoard([...board])
-    
   };
 
   return (
@@ -44,15 +38,30 @@ export default function App() {
               close={close}
               addSpiritAction={addSpiritAction}
             />{" "}
-            <MidArea
-              spiritLength={spirit.length}
-              spiritActs={spiritActs}
-              onDrop={handleDrop}
-              board={board}
-            />
+            {spirit.length > 0 && spiritActs && (
+              <MidArea
+                spirit={spirit}
+                setSpirit={setSpirit}
+                spiritActs={spiritActs}
+              />
+            )}
+            {spirit.length === 0 && (
+              <div className="flex items-center justify-center w-full h-full">
+                <h1 className="text-2xl mb-2 font-bold">
+                  Add A Spirit To Add Actions To It.
+                </h1>
+              </div>
+            )}
+            {spirit.length > 0 && !spiritActs && (
+              <div className="flex items-center justify-center w-full h-full">
+                <h1 className="text-2xl mb-2 font-bold">
+                  Select A Spirit To Add Actions.
+                </h1>
+              </div>
+            )}
           </div>
           <div className="w-1/3 h-screen overflow-hidden flex flex-row bg-white border-t border-l border-gray-200 rounded-tl-xl ml-2">
-            <PreviewArea />
+            <PreviewArea spirit={spirit} />
           </div>
         </div>
       </div>

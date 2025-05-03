@@ -4,7 +4,7 @@ import { useDrag } from "react-dnd";
 const Chip = ({ type, color, operation, action }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: type,
-    item: { operation, color },
+    item: { operation, color, action },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
