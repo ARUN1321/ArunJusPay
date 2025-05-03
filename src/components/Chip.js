@@ -1,25 +1,24 @@
 import React from "react";
 import { useDrag } from "react-dnd";
 
-function Chip(props) {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: props.type || "DEFAULT",
-    item: { props },
+const Chip = ({ type = "DEFAULT", color, action }) => {
+  const [{ isDragging }, drag] = useDrag({
+    type,
+    item: { type, color, action },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }));
-
-  const dragRef = props.type ? drag : null;
+  });
 
   return (
     <div
-      ref={dragRef}
-      className={`flex flex-row flex-wrap ${props.class} text-white px-2 py-1 my-2 text-sm cursor-pointer`}
+      ref={drag}
+      className={`flex flex-row flex-wrap ${color} text-white px-2 py-1 my-2 text-sm cursor-pointer`}
+      style={{ opacity: isDragging ? 0.5 : 1 }}
     >
-      {props.operation}
+      {action}
     </div>
   );
-}
+};
 
 export default Chip;

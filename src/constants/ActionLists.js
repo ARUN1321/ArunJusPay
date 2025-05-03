@@ -6,8 +6,6 @@ export const actionLists = [
     title: "Events",
     actions: [
       {
-        func: "clickFlag",
-        class: "bg-yellow-500",
         operation: (
           <>
             {"When "}
@@ -15,12 +13,14 @@ export const actionLists = [
             {"clicked"}
           </>
         ),
+        action: "clickFlag",
+        class: "bg-yellow-500",
         onTap: "flag",
       },
       {
-        func: "clickSprite",
-        class: "bg-yellow-500",
         operation: "When this sprite clicked",
+        action: "clickSprite",
+        class: "bg-yellow-500",
         onTap: "sprite",
       },
     ],
@@ -29,14 +29,12 @@ export const actionLists = [
     title: "Motions",
     actions: [
       {
-        func: "move",
-        class: "bg-blue-500",
         operation: "Move 10 steps",
+        action: "move",
+        class: "bg-blue-500",
         action: { x: 200, y: 0, rotate: 0 },
       },
       {
-        func: "rotateAntiClock",
-        class: "bg-blue-500",
         operation: (
           <>
             {" "}
@@ -45,11 +43,11 @@ export const actionLists = [
             {"15 degrees"}
           </>
         ),
+        action: "rotateAntiClock",
+        class: "bg-blue-500",
         action: { x: 0, y: 0, rotate: -90 },
       },
       {
-        func: "rotateClockWise",
-        class: "bg-blue-500",
         operation: (
           <>
             {"Turn "}
@@ -57,12 +55,14 @@ export const actionLists = [
             {"15 degrees"}
           </>
         ),
+        action: "rotateClockWise",
+        class: "bg-blue-500",
         action: { x: 0, y: 0, rotate: 90 },
       },
       {
-        func: "goToXY",
-        class: "bg-blue-500",
         operation: "Go to",
+        action: "goToXY",
+        class: "bg-blue-500",
         action: { x: 0, y: 0 },
       },
     ],
@@ -71,9 +71,9 @@ export const actionLists = [
     title: "Controls",
     actions: [
       {
-        func: "Repeat",
-        class: "bg-green-500",
         operation: "Repeat",
+        action: "Repeat",
+        class: "bg-green-500",
         array: [],
         repeat: 5,
       },
