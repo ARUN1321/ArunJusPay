@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { actionLists } from "../constants/ActionLists";
 import Chip from "./Chip";
 
-export default function Sidebar({ spirit, setSpirit, close }) {
-  const [selectedSpirit, setSelectedSpirit] = useState(0);
+export default function Sidebar({ spirit, setSpirit, close, addSpiritAction }) {
+  const [selectedSpirit, setSelectedSpirit] = useState();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
 
   const handleSpiritSubmit = () => {
-    if (!name || !url) return alert("Fill both the blanks");
+    if (!name || !url) return alert("Fill both the Fields.");
     if (spirit.some((spirit) => spirit.name === name))
       return alert("Spirit name already exists!");
     setSpirit((prev) => [...prev, { name, url, path: [] }]);
@@ -24,8 +24,8 @@ export default function Sidebar({ spirit, setSpirit, close }) {
           <div className="font-bold">{title}</div>
           {actions.map((act) => (
             <Chip
-              key={act.operation}
-              action={act.operation}
+              action={act.action}
+              operation={act.operation}
               color={act.class}
               type="insert"
             />
@@ -60,7 +60,7 @@ export default function Sidebar({ spirit, setSpirit, close }) {
         className="rounded-md border-black w-full h-full p-1 border-2 border-dotted"
         style={{
           display: "grid",
-          overflow: "scroll",
+          overflowY: "scroll",
           gridTemplateColumns: "auto auto",
           gridTemplateRows: "repeat(auto-fill, 15%)",
           gap: "5px",
@@ -70,7 +70,9 @@ export default function Sidebar({ spirit, setSpirit, close }) {
           spirit.map((ele, index) => (
             <div
               key={index}
-              onClick={() => setSelectedSpirit(index)}
+              onClick={() => {
+                setSelectedSpirit(index), addSpiritAction(index);
+              }}
               className={`w-full h-full rounded-md relative ${
                 selectedSpirit === index && "border-2 border-black"
               }`}
@@ -87,6 +89,7 @@ export default function Sidebar({ spirit, setSpirit, close }) {
                 className="h-7 w-7 bg-red-500 text-white font-bold rounded-full flex items-center justify-center absolute cursor-pointer hover:bg-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
+                  setSelectedSpirit();
                   close(index);
                 }}
                 style={{ top: "-5px", left: "-5px" }}
