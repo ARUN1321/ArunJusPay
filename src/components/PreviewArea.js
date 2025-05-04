@@ -4,14 +4,16 @@ import Icon from "../components/Icon";
 export default function PreviewArea({ spirit }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [swappedPaths, setSwappedPaths] = useState({});
+  const [animationProgress, setAnimationProgress] = useState({}); // Track the progress for each spirit
 
   // Generate keyframes from a list of actions
-  const generateKeyframes = (actions, name) => {
+  const generateKeyframes = (actions, name, idx) => {
     let keyframes = [];
     let posX = 0, posY = 0, rotate = 0;
     const REPEAT_WINDOW = 3;
     const processedActions = [];
 
+    // Process actions (repeat handling, etc.)
     for (let i = 0; i < actions.length; i++) {
       const act = actions[i];
       if (act.active === "Repeat") {
@@ -80,6 +82,8 @@ export default function PreviewArea({ spirit }) {
 
   // Collision detection and dynamic path swapping
   useEffect(() => {
+    if (!isAnimating) return; // Skip if animation is not active
+
     const newSwapped = { ...swappedPaths };
 
     for (let i = 0; i < spirit.length; i++) {
@@ -93,17 +97,37 @@ export default function PreviewArea({ spirit }) {
         const dx = Math.abs(pos1.x - pos2.x);
         const dy = Math.abs(pos1.y - pos2.y);
 
+        // Detect collision
         if (dx < 50 && dy < 50) {
           if (!newSwapped[i] && !newSwapped[j]) {
+            console.log(`Collision detected between spirits: ${i} and ${j}`);
+
+            // Swap paths only if they haven't been swapped already
             newSwapped[i] = path2;
             newSwapped[j] = path1;
+
+            // Check the current progress and swap actions from the collision point onward
+            const currentProgressI = animationProgress[i] || 0;
+            const currentProgressJ = animationProgress[j] || 0;
+
+            newSwapped[i] = [
+              ...path2.slice(0, currentProgressI),
+              ...path1.slice(currentProgressI),
+            ];
+            newSwapped[j] = [
+              ...path1.slice(0, currentProgressJ),
+              ...path2.slice(currentProgressJ),
+            ];
+
+            // Update swapped paths with the newly swapped actions
+            console.log("Updated swapped paths:", newSwapped);
           }
         }
       }
     }
 
     setSwappedPaths(newSwapped);
-  }, [spirit]);
+  }, [isAnimating, spirit, animationProgress]); // Re-run when animation starts, spirits or progress changes
 
   const handleFlagClick = () => {
     setIsAnimating(true);
@@ -112,6 +136,15 @@ export default function PreviewArea({ spirit }) {
   const handleStopClick = () => {
     setIsAnimating(false);
     setSwappedPaths({}); // Reset on stop
+    setAnimationProgress({}); // Reset animation progress
+  };
+
+  // Update animation progress dynamically
+  const handleAnimationProgress = (spiritIdx, progress) => {
+    setAnimationProgress((prev) => ({
+      ...prev,
+      [spiritIdx]: progress, // Update progress for each spirit
+    }));
   };
 
   return (
@@ -146,7 +179,7 @@ export default function PreviewArea({ spirit }) {
             const animationName = `animate-spirit-${idx}`;
             const path = swappedPaths[idx] || ele.path;
             const actions = path.map(p => p.action);
-            const keyframesCSS = generateKeyframes(actions, `spirit-${idx}`);
+            const keyframesCSS = generateKeyframes(actions, `spirit-${idx}`, idx);
 
             return (
               <React.Fragment key={idx}>
@@ -160,6 +193,11 @@ export default function PreviewArea({ spirit }) {
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     animation: isAnimating ? `${animationName} 4s linear forwards` : "none",
+                    animationIterationCount: "infinite",
+                    animationDelay: `${animationProgress[idx] || 0}s`, // Apply delay based on progress
+                  }}
+                  onAnimationIteration={() => {
+                    handleAnimationProgress(idx, (animationProgress[idx] || 0) + 1); // Update progress
                   }}
                 ></div>
               </React.Fragment>
