@@ -79,7 +79,7 @@ export const actionLists = [
         ),
         action: "rotateAntiClock",
         class: "bg-blue-500",
-        action: { active: "rotateAntiClock", rotate: -15 },
+        action: { active: "rotateAntiClock", rotate: 15 },
       },
       {
         id: 3,
@@ -140,7 +140,7 @@ export const actionLists = [
               value={2}
               className="pl-1 text-black w-10 ml-1 mr-1 rounded-md"
             />{" "}
-            {"sec"}"
+            {"sec"}
           </>
         ),
         action: { active: "Think", time: 2 },
@@ -163,7 +163,8 @@ export const actionLists = [
             {"times"}
           </>
         ),
-        action: { active: "Repeat", count: 5 },
+        // action: { active: "Repeat", count: 10, actions: [] },
+        action: { active: "Repeat", count: 10 },
         class: "bg-green-500",
       },
     ],
