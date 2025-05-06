@@ -1,7 +1,7 @@
 import React from "react";
 import { useDrop } from "react-dnd";
 
-export default function ActionBlockRenderer({ ele, index, updateInputBlockValue }) {
+export default function ActionBlockRenderer({ type = {}, ele, index, updateInputBlockValue }) {
   const { active, cord = {}, rotate = 0, text = "", time = 2, count = 10 } = ele.action;
 
   const input = (value, onChange, extra = "") => (
@@ -29,7 +29,7 @@ export default function ActionBlockRenderer({ ele, index, updateInputBlockValue 
       newValue = Math.max(0, safeValue);
     }
 
-    updateInputBlockValue(index, {
+    updateInputBlockValue(type, index, {
       [field]: newValue,
     });
   };
@@ -37,52 +37,52 @@ export default function ActionBlockRenderer({ ele, index, updateInputBlockValue 
   switch (active) {
     case "Start":
     case "ClickSpirit":
-      return <>{ele.operation}</>;
+      return <div >{ele.operation}</div>;
 
     case "move":
       return (
-        <>
+        <div className={type.name && type.name == 'repeateChild' ? `inline-flex items-center justify-center h-8 ${ele.color} text-white rounded-md px-3 py-2 text-sm font-bold m-1` : ""}>
           Move{" "}
           {input(cord.x ?? 0, (e) =>
-            updateInputBlockValue(index, {
+            updateInputBlockValue(type, index, {
               cord: { x: Number(e.target.value) || 0, y: 0 },
             })
           )}{" "}
           steps
-        </>
+        </div>
       );
 
     case "rotateClockWise":
     case "rotateAntiClock":
       return (
-        <>
+        <div className={type.name && type.name == 'repeateChild' ? `inline-flex items-center justify-center h-8 ${ele.color} text-white rounded-md px-3 py-2 text-sm font-bold m-1` : ""}>
           Turn {active === "rotateClockWise" ? "↻" : "↺"}{" "}
           {input(rotate, updateField("rotate"))} degrees
-        </>
+        </div>
       );
 
     case "goToXY":
       return (
-        <>
+        <div className={type.name && type.name == 'repeateChild' ? `inline-flex items-center justify-center h-8 ${ele.color} text-white rounded-md px-3 py-2 text-sm font-bold m-1` : ""}>
           Go to x:{" "}
           {input(cord.x ?? 0, (e) =>
-            updateInputBlockValue(index, {
+            updateInputBlockValue(type, index, {
               cord: { x: Number(e.target.value) || 0, y: cord.y ?? 0 },
             })
           )}
           and y:{" "}
           {input(cord.y ?? 0, (e) =>
-            updateInputBlockValue(index, {
+            updateInputBlockValue(type, index, {
               cord: { x: cord.x ?? 0, y: Number(e.target.value) || 0 },
             })
           )}
-        </>
+        </div>
       );
 
     case "Say":
     case "Think":
       return (
-        <>
+        <div className={type.name && type.name == 'repeateChild' ? `inline-flex items-center justify-center h-8 ${ele.color} text-white rounded-md px-3 py-2 text-sm font-bold m-1` : ""}>
           {active}
           <input
             type="text"
@@ -91,15 +91,17 @@ export default function ActionBlockRenderer({ ele, index, updateInputBlockValue 
             className="ml-1 mr-1 w-24 px-1 text-black rounded"
           />
           for {input(time, updateField("time"))} sec
-        </>
+        </div>
       );
 
     case "Repeat": {
+      const children = ele.action.children
       const [{ isOver }, drop] = useDrop(() => ({
-        accept: "chip",
+        accept: "insert",
         drop: (item) => {
-          const newChildren = [...(ele.children || []), item];
-          updateInputBlockValue(index, { children: newChildren });
+          const newChildren = [...children];
+          newChildren.push(item)
+          updateInputBlockValue(type, index, { children: newChildren });
         },
         collect: (monitor) => ({
           isOver: monitor.isOver(),
@@ -116,19 +118,19 @@ export default function ActionBlockRenderer({ ele, index, updateInputBlockValue 
 
           <div
             ref={drop}
+            style={{display: 'flex', flexDirection: 'column'}}
             className={`mt-2 ml-2 border-2 border-dashed rounded-md p-2 min-h-[40px] transition-colors ${isOver ? "border-green-500 bg-green-50" : "border-gray-300 bg-white"
               }`}
           >
-            {(ele.children || []).length === 0 ? (
+            {(ele.action.children || []).length === 0 ? (
               <div className="text-gray-400 text-sm italic">Drop actions here</div>
             ) : (
-              ele.children.map((child, childIndex) => (
-                <div
-                  key={childIndex}
-                  className={`inline-flex items-center justify-center h-8 ${child.color || "bg-gray-500"} text-white rounded-md px-3 py-2 text-sm font-bold m-1`}
-                >
-                  {child.action?.active || child.operation}
-                </div>
+              ele.action.children.map((child, childIndex) => (
+                <ActionBlockRenderer
+                  type={{ name: "repeateChild", childIndex: childIndex }}
+                  ele={child}
+                  index={index}
+                  updateInputBlockValue={updateInputBlockValue} />
               ))
             )}
           </div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Icon from "../components/Icon";
 
 export default function PreviewArea({ spirit }) {
-   console.log(spirit,'Arun123')
   const [isAnimating, setIsAnimating] = useState(false);
   const [swappedPaths, setSwappedPaths] = useState({});
   const [animationProgress, setAnimationProgress] = useState({}); // Track the progress for each spirit

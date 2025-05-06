@@ -164,7 +164,7 @@ export const actionLists = [
           </>
         ),
         // action: { active: "Repeat", count: 10, actions: [] },
-        action: { active: "Repeat", count: 10 },
+        action: { active: "Repeat", count: 10, children: [] },
         class: "bg-green-500",
       },
     ],

@@ -9,11 +9,17 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
     setUpdatedPath([...spiritActs?.path]);
   }, [spiritActs]);
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: "insert",
-    drop: (item) => setUpdatedPath((prev) => [...prev, item]),
-    collect: (monitor) => ({ isOver: !!monitor.isOver() }),
-  }), [spiritActs]);
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: "insert",
+      drop: (item, monitor) => {
+        if (monitor.didDrop()) return;
+        setUpdatedPath((prev) => [...prev, item]); // Only handle if not nested
+      },
+      collect: (monitor) => ({ isOver: !!monitor.isOver() }),
+    }),
+    [spiritActs]
+  );
 
   const updateBlockValue = () => {
     setSpirit(spirit.map((ele) =>
@@ -21,13 +27,31 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
     ));
   };
 
-  const updateInputBlockValue = (index, updatedFields) => {
-    setUpdatedPath((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, action: { ...item.action, ...updatedFields } } : item
-      )
-    );
+  const updateInputBlockValue = (type, index, updatedFields) => {
+
+    setUpdatedPath((prev) => {
+      const newPath = [...prev];
+
+      // Deep copy the target item
+      const target = JSON.parse(JSON.stringify(newPath[index]));
+      if (type && type.name == 'repeateChild') {
+        target.action.children[type.childIndex].action = { ...target.action.children[type.childIndex].action, ...updatedFields }
+      } else {
+        if (updatedFields.children && target.action.children) {
+          target.action.children = [
+            ...target.action.children,
+            ...updatedFields.children,
+          ];
+        } else {
+          target.action = { ...target.action, ...updatedFields }
+        }
+      }
+
+      newPath[index] = target;
+      return newPath;
+    });
   };
+
 
   const handleDelete = (index) =>
     setUpdatedPath((prev) => prev.filter((_, i) => i !== index));
@@ -54,7 +78,7 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
           style={{ height: "94%" }}
         >
           {updatedPath.map((ele, index) => (
-            <div key={index} className="relative">
+            <div key={index} className="relative mt-1 mb-1">
               <div className={`inline-flex items-center justify-center ${ele.action.active === 'Repeat' ? 'h-full' : 'h-8'} ${ele.color} text-white rounded-md px-3 py-2 text-sm font-bold m-1`}>
                 <ActionBlockRenderer
                   ele={ele}
