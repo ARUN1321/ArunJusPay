@@ -7,13 +7,7 @@ export const actionLists = [
     actions: [
       {
         id: 0,
-        operation: (
-          <>
-            {"When "}
-            <Icon name="flag" size={15} className="text-green-600 mx-2" />
-            {"clicked"}
-          </>
-        ),
+        operation: "When this Flag clicked",
         action: { active: "Start" },
         class: "bg-yellow-500",
         onTap: "flag",
@@ -163,7 +157,6 @@ export const actionLists = [
             {"times"}
           </>
         ),
-        // action: { active: "Repeat", count: 10, actions: [] },
         action: { active: "Repeat", count: 10, children: [] },
         class: "bg-green-500",
       },

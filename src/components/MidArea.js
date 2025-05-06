@@ -30,7 +30,7 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
   const updateInputBlockValue = (type, index, updatedFields) => {
     setUpdatedPath((prev) => {
       const newPath = [...prev];
-      
+
       const target = JSON.parse(JSON.stringify(newPath[index]));
 
       if (type && type.name === "repeateChild") {
@@ -45,18 +45,18 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
           target.action = { ...target.action, ...updatedFields };
         }
       }
-  
+
       newPath[index] = target;
       return newPath;
     });
-  };  
+  };
 
 
   const handleDelete = (index) =>
     setUpdatedPath((prev) => prev.filter((_, i) => i !== index));
 
   return (
-    <div className="flex-1 relative h-full overflow-auto p-2 flex items-center justify-center text-center">
+    <div className="flex-1 relative h-full overflow-auto p-2 flex items-center justify-center text-center" style={{ overflow: 'hidden' }}>
       <div className="border-2 border-dotted rounded-md border-black w-full h-full bg-blue-50">
         <div className="flex items-center justify-center w-full mb-2 gap-2">
           <h1 className="text-2xl font-bold text-center">
@@ -74,7 +74,7 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
         <div
           ref={drop}
           className={`w-full flex flex-col items-start pt-10 pl-10 ${isOver ? "bg-green-100" : ""}`}
-          style={{ height: "94%" }}
+          style={{ height: "94%", overflow: 'scroll' }}
         >
           {updatedPath.map((ele, index) => (
             <div key={index} className="relative mt-1 mb-1">
