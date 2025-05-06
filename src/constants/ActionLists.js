@@ -99,7 +99,7 @@ export const actionLists = [
         ),
         action: "goToXY",
         class: "bg-blue-500",
-        action: { active: "goTo", cord: { x: 0, y: 0 } },
+        action: { active: "goToXY", cord: { x: 0, y: 0 } },
       },
     ],
   },
@@ -123,7 +123,7 @@ export const actionLists = [
             {"sec"}
           </>
         ),
-        action: { active: "Say", time: 2 },
+        action: { active: "Say", text: "Hello", time: 2 },
         class: "bg-indigo-500",
       },
       {
@@ -143,7 +143,7 @@ export const actionLists = [
             {"sec"}
           </>
         ),
-        action: { active: "Think", time: 2 },
+        action: { active: "Think", text: "Hello", time: 2 },
         class: "bg-indigo-500",
       },
     ],

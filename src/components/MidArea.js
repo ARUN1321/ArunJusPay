@@ -1,120 +1,76 @@
 import React, { useState, useEffect } from "react";
 import { useDrop } from "react-dnd";
-import RepeatActChip from "../components/RepeatActChip";
+import ActionBlockRenderer from "../components/ActionBlockRenderer";
 
 export default function MidArea({ spirit, setSpirit, spiritActs }) {
-  const [{ isOver }, drop] = useDrop(
-    () => ({
-      accept: "insert",
-      drop: (item) => {
-        handleDrop(item, spirit, spiritActs.name);
-      },
-      collect: (monitor) => ({
-        isOver: !!monitor.isOver(),
-      }),
-    }),
-    [spiritActs.name]
-  );
+  const [updatedPath, setUpdatedPath] = useState([...spiritActs?.path]);
 
-  const handleDrop = (item, spirit, name) => {
-    const newItem = spirit.map((ele) => {
-      if (ele.name === name) {
-        let a = ele.path;
-        a.push(item);
-        return { ...ele, path: a };
-      }
-      return ele;
-    });
-    setSpirit(() => newItem);
-    return;
+  useEffect(() => {
+    setUpdatedPath([...spiritActs?.path]);
+  }, [spiritActs]);
+
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: "insert",
+    drop: (item) => setUpdatedPath((prev) => [...prev, item]),
+    collect: (monitor) => ({ isOver: !!monitor.isOver() }),
+  }), [spiritActs]);
+
+  const updateBlockValue = () => {
+    setSpirit(spirit.map((ele) =>
+      ele.name === spiritActs.name ? { ...ele, path: updatedPath } : ele
+    ));
   };
 
-  const handleDelete = (name, index) => {
-    const newItem = spirit.map((ele) => {
-      if (ele.name === name) {
-        let a = ele.path;
-        a.splice(index, 1);
-        return { ...ele, path: a };
-      }
-      return ele;
-    });
-    setSpirit(() => newItem);
-    return;
+  const updateInputBlockValue = (index, updatedFields) => {
+    setUpdatedPath((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, action: { ...item.action, ...updatedFields } } : item
+      )
+    );
   };
 
-  // const updatedData = (data) => {
-  //   console.log(data, "Arun123");
-  //   return;
-  // };
+  const handleDelete = (index) =>
+    setUpdatedPath((prev) => prev.filter((_, i) => i !== index));
 
   return (
     <div className="flex-1 relative h-full overflow-auto p-2 flex items-center justify-center text-center">
       <div className="border-2 border-dotted rounded-md border-black w-full h-full bg-blue-50">
-        <div className="flex items-center justify-center w-full mb-2">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-center">
-              To add animation to `{spiritActs.name}`, place the code block here
-            </h1>
-            <div
-              style={{
-                backgroundImage: `url(${spiritActs?.url})`,
-                backgroundSize: "cover",
-                height: 50,
-                width: 50,
-                backgroundPosition: "center",
-                borderRadius: "0.5rem",
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-center w-full mb-2 gap-2">
+          <h1 className="text-2xl font-bold text-center">
+            To add animation to `{spiritActs.name}`, place the code block here
+          </h1>
+          <button className="bg-blue-300 px-2 rounded-md" onClick={updateBlockValue}>
+            Add or update actions for {spiritActs.name}.
+          </button>
+          <div
+            className="h-[50px] w-[50px] rounded-md bg-center bg-cover"
+            style={{ backgroundImage: `url(${spiritActs?.url})` }}
+          />
         </div>
 
         <div
           ref={drop}
-          draggable={false}
-          className={`w-full flex flex-column items-start pt-10 pl-10 ${
-            isOver ? "bg-green-100" : ""
-          }`}
-          style={{ height: "94%", flexDirection: "column" }}
+          className={`w-full flex flex-col items-start pt-10 pl-10 ${isOver ? "bg-green-100" : ""}`}
+          style={{ height: "94%" }}
         >
-          {spiritActs.path.map((ele, index) => {
-            // const isRepeat = ele.action.active === "Repeat";
-            return (
-              <div key={index} className="relative">
+          {updatedPath.map((ele, index) => (
+            <div key={index} className="relative">
+              <div className={`inline-flex items-center justify-center ${ele.action.active === 'Repeat' ? 'h-full' : 'h-8'} ${ele.color} text-white rounded-md px-3 py-2 text-sm font-bold m-1`}>
+                <ActionBlockRenderer
+                  ele={ele}
+                  index={index}
+                  updateInputBlockValue={updateInputBlockValue}
+                />
                 <div
-                  style={{ color: "white" }}
-                  // className={`inline-flex items-center ${
-                  //   isRepeat ? "justify-start h-auto" : "justify-center h-8"
-                  // } ${
-                  //   ele.color
-                  // } text-white-800 rounded-md px-3 py-2 text-sm font-bold m-1`}
-                  className={`inline-flex items-center justify-center h-8 ${ele.color} text-white-800 rounded-md px-3 py-2 text-sm font-bold m-1`}
+                  className="h-3 w-3 bg-red-500 text-white font-bold rounded-full flex items-center justify-center absolute cursor-pointer hover:bg-red-600"
+                  onClick={() => handleDelete(index)}
+                  style={{ fontSize: "8px", top: "-5px", left: "-5px" }}
                 >
-                  {/* {isRepeat ? (
-                    <RepeatActChip
-                      data={ele}
-                      index={index}
-                      spirit={spirit}
-                      name={spiritActs.name}
-                      updatedData={updatedData}
-                    />
-                  ) : ( */}
-                  {ele.operation}
-                  {/* )} */}
-                  {/* Delete button */}
-                  <div
-                    className="h-3 w-3 bg-red-500 text-white font-bold rounded-full flex items-center justify-center absolute cursor-pointer hover:bg-red-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(spiritActs.name, index);
-                    }}
-                    style={{ fontSize: "8px", top: "-5px", left: "-5px" }}
-                  >
-                    X
-                  </div>
+                  X
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>

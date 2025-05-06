@@ -7,8 +7,6 @@ import { DndProvider } from "react-dnd";
 
 export default function App() {
   const [spiritActs, setSpiritActs] = useState();
-  
-
   const [spirit, setSpirit] = useState([
     {
       name: "bitcoin",
