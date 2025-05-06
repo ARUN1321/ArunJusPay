@@ -28,14 +28,13 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
   };
 
   const updateInputBlockValue = (type, index, updatedFields) => {
-
     setUpdatedPath((prev) => {
       const newPath = [...prev];
-
-      // Deep copy the target item
+      
       const target = JSON.parse(JSON.stringify(newPath[index]));
-      if (type && type.name == 'repeateChild') {
-        target.action.children[type.childIndex].action = { ...target.action.children[type.childIndex].action, ...updatedFields }
+
+      if (type && type.name === "repeateChild") {
+        target.action.children[type.childIndex].action = { ...target.action.children[type.childIndex].action, ...updatedFields };
       } else {
         if (updatedFields.children && target.action.children) {
           target.action.children = [
@@ -43,14 +42,14 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
             ...updatedFields.children,
           ];
         } else {
-          target.action = { ...target.action, ...updatedFields }
+          target.action = { ...target.action, ...updatedFields };
         }
       }
-
+  
       newPath[index] = target;
       return newPath;
     });
-  };
+  };  
 
 
   const handleDelete = (index) =>
