@@ -63,7 +63,7 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
             To add animation to `{spiritActs.name}`, place the code block here
           </h1>
           <button className="bg-blue-300 px-2 rounded-md" onClick={updateBlockValue}>
-            Add or update actions for {spiritActs.name}.
+            Click to update actions for {spiritActs.name}
           </button>
           <div
             className="h-[50px] w-[50px] rounded-md bg-center bg-cover"
