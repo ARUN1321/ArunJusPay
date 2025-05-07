@@ -13,6 +13,11 @@ export default function App() {
       url: "https://www.seekpng.com/png/detail/9-92064_sticker-2-bitcoin-store-bitcoin-b.png",
       path: [],
     },
+    {
+      name: "cat",
+      url: "https://www.seekpng.com/png/detail/21-218274_grenade-granada-pubg-game-jogo-pubg-grenade-png.png",
+      path: [],
+    },
   ]);
 
   const addSpiritAction = (index) => {

@@ -15,23 +15,36 @@ const PreviewArea = ({ spirit }) => {
     setIsTracking(false); // Stop tracking when reset is clicked
   };
 
-  const [spiritPaths, setSpiritPaths] = useState(() =>
-    Object.fromEntries(spirit.map((s) => [s.name, s.path]))
-  );
-  
-  // Swap animation paths of two spirits
-  const swapSpiritPaths = (name1, name2) => {
-    setSpiritPaths((prev) => {
-      const updated = { ...prev };
-      const temp = updated[name1];
-      updated[name1] = updated[name2];
-      updated[name2] = temp;
-      return updated;
-    });
-  };
-  
+  function swapPaths(arr, input) {
+    // Clone the array to avoid in-place mutation (important for React)
+    const cloned = arr.map(obj => ({ ...obj, path: [...obj.path] }));
 
-  // Check for spirits with the same position
+    // Create a map of name to index
+    const nameToIndex = {};
+    cloned.forEach((obj, idx) => {
+      nameToIndex[obj.name] = idx;
+    });
+
+    // Extract paths in input order
+    const paths = input.map(name => {
+      const idx = nameToIndex[name];
+      return idx !== undefined ? cloned[idx].path : null;
+    });
+
+    // Rotate the paths (i.e., assign each path to the next object in input)
+    for (let i = 0; i < input.length; i++) {
+      const currentName = input[i];
+      const nextPath = paths[(i + 1) % input.length]; // Wrap-around if needed
+      const idx = nameToIndex[currentName];
+      if (idx !== undefined) {
+        cloned[idx].path = nextPath;
+      }
+    }
+
+    return cloned;
+  }
+
+
   const checkIntersection = () => {
     let intersectingSpirits = [];
     const positionMap = {};
@@ -54,7 +67,9 @@ const PreviewArea = ({ spirit }) => {
 
     // Log the spirits that are intersecting
     if (intersectingSpirits.length > 0) {
-      console.log(`Spirits intersecting: ${intersectingSpirits.join(", ")}`);
+      let updatedspiritePath = swapPaths(spirit, intersectingSpirits); // this will now correctly return the updated array
+      // console.log(updatedspiritePath, 'Arun123'); // Log the updated spirits
+      spirit = updatedspiritePath
     } else {
       console.log("No spirits intersecting.");
     }
@@ -93,8 +108,8 @@ const PreviewArea = ({ spirit }) => {
 
       {/* Shared preview canvas */}
       <div className="relative flex-1 bg-gray-200 rounded shadow overflow-hidden">
-        {spirit.map((sprite, idx) => (
-          <SpiritPreview
+        {spirit.map((sprite, idx) => {
+          return (<SpiritPreview
             key={idx}
             sprite={sprite}
             runSignal={runSignal}
@@ -103,8 +118,8 @@ const PreviewArea = ({ spirit }) => {
             spiritsPositions={spiritsPositions} // Pass current positions to check for intersections
             setSpiritFirstAnimationCompleted={setSpiritFirstAnimationCompleted} // Pass setter to track first animation
             spiritFirstAnimationCompleted={spiritFirstAnimationCompleted} // Pass the current state of animation completion
-          />
-        ))}
+          />)
+        })}
       </div>
     </div>
   );
@@ -119,6 +134,7 @@ const SpiritPreview = ({
   setSpiritFirstAnimationCompleted,
   spiritFirstAnimationCompleted,
 }) => {
+  console.log(sprite, 'Arun123')
   const [position, setPosition] = useState(CENTER);
   const [tooltip, setTooltip] = useState({ text: "", visible: false });
   const [logPosition, setLogPosition] = useState(false); // Track if we should log the position
@@ -236,16 +252,19 @@ const SpiritPreview = ({
     setTooltip({ text: "", visible: false });
   }, [resetSignal]);
 
-  // Log position in real-time when logPosition is true
   useEffect(() => {
     if (logPosition && spiritRef.current) {
       const rect = spiritRef.current.getBoundingClientRect();
-      setSpiritsPositions((prevPositions) => [
-        ...prevPositions.filter((pos) => pos.name !== sprite.name), // Remove previous position of this spirit
-        { name: sprite.name, x: rect.x, y: rect.y }, // Add new position
-      ]);
+
+      // Update spirits positions by checking for name and x, y values
+      setSpiritsPositions((prevPositions) => {
+        const updatedPositions = prevPositions.filter((pos) => pos.name !== sprite.name);
+        updatedPositions.push({ name: sprite.name, x: rect.x, y: rect.y });
+        return updatedPositions;  // Return the new updated positions array
+      });
     }
-  }, [position, logPosition]); // Only log when position changes and logPosition is true
+  }, [position, logPosition]);  // Only log when position changes and logPosition is true
+
 
   return (
     <div
