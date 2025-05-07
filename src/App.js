@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Sidebar from "./components/Sidebar";
 import MidArea from "./components/MidArea";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -8,67 +8,64 @@ import CatSprite from './components/CatSprite';
 import DogSprite from './components/DogSprite';
 
 export default function App() {
-  const [spiritActs, setSpiritActs] = useState();
+  const [spiritActs, setSpiritActs] = useState(null);
   const [spirit, setSpirit] = useState([
     {
       name: "Cat",
-      url: <CatSprite width={"95.17898101806641"}
-        height={"100.04156036376953"} />,
+      url: <CatSprite width="95" height="100" />,
       path: [],
     },
     {
       name: "Dog",
-      url: <DogSprite width={"95.17898101806641"}
-        height={"100.04156036376953"} />,
+      url: <DogSprite width="95" height="100" />,
       path: [],
     },
   ]);
 
-  const addSpiritAction = (index) => {
+  const addSpiritAction = useCallback((index) => {
     setSpiritActs(spirit[index]);
-  };
+  }, [spirit]);
 
-  const close = (index) => {
-    if (spiritActs.name == spirit[index].name) {
-      setSpiritActs();
+  const close = useCallback((index) => {
+    if (spiritActs?.name === spirit[index].name) {
+      setSpiritActs(null);
     }
-    setSpirit((prevSpirits) => prevSpirits.filter((_, i) => i !== index));
-  };
+    setSpirit((prev) => prev.filter((_, i) => i !== index));
+  }, [spirit, spiritActs]);
+
+  let mainContent;
+  if (spirit.length === 0) {
+    mainContent = (
+      <div className="flex items-center justify-center w-full h-full">
+        <h1 className="text-2xl font-bold">Add A Spirit To Add Actions To It.</h1>
+      </div>
+    );
+  } else if (spiritActs) {
+    mainContent = (
+      <MidArea spirit={spirit} setSpirit={setSpirit} spiritActs={spiritActs} />
+    );
+  } else {
+    mainContent = (
+      <div className="flex items-center justify-center w-full h-full">
+        <h1 className="text-2xl font-bold">Select A Spirit To Add Actions.</h1>
+      </div>
+    );
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="bg-blue-100 font-sans">
-        <div className="h-screen overflow-hidden flex flex-row  ">
-          <div className="flex-1 h-screen overflow-hidden flex flex-row bg-white border-t border-r border-gray-200 rounded-tr-xl mr-2">
+        <div className="h-screen overflow-hidden flex flex-row">
+          <div className="flex-1 h-full overflow-hidden flex bg-white border-t border-r border-gray-200 rounded-tr-xl mr-2">
             <Sidebar
               spirit={spirit}
               setSpirit={setSpirit}
               close={close}
               addSpiritAction={addSpiritAction}
-            />{" "}
-            {spirit.length > 0 && spiritActs && (
-              <MidArea
-                spirit={spirit}
-                setSpirit={setSpirit}
-                spiritActs={spiritActs}
-              />
-            )}
-            {spirit.length === 0 && (
-              <div className="flex items-center justify-center w-full h-full">
-                <h1 className="text-2xl mb-2 font-bold">
-                  Add A Spirit To Add Actions To It.
-                </h1>
-              </div>
-            )}
-            {spirit.length > 0 && !spiritActs && (
-              <div className="flex items-center justify-center w-full h-full">
-                <h1 className="text-2xl mb-2 font-bold">
-                  Select A Spirit To Add Actions.
-                </h1>
-              </div>
-            )}
+            />
+            {mainContent}
           </div>
-          <div className="w-1/3 h-screen overflow-hidden flex flex-row bg-white border-t border-l border-gray-200 rounded-tl-xl ml-2">
+          <div className="w-1/3 h-full overflow-hidden flex bg-white border-t border-l border-gray-200 rounded-tl-xl ml-2">
             <PreviewArea spirit={spirit} />
           </div>
         </div>
