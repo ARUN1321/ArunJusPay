@@ -3,123 +3,96 @@ import React, { useState, useEffect, useRef } from "react";
 const CENTER = { x: 0, y: 0, rotation: 0 };
 
 const PreviewArea = ({ spirit }) => {
+  const [localSpirit, setLocalSpirit] = useState(spirit);
   const [runSignal, setRunSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
-  const [spiritsPositions, setSpiritsPositions] = useState([]); // Store positions of all spirits
-  const [spiritFirstAnimationCompleted, setSpiritFirstAnimationCompleted] = useState({}); // Track first animation completion for each spirit
-  const [isTracking, setIsTracking] = useState(false); // Track whether we are continuously checking intersections
+  const [spiritsPositions, setSpiritsPositions] = useState([]);
+  const [spiritFirstAnimationCompleted, setSpiritFirstAnimationCompleted] = useState({});
+  const [isTracking, setIsTracking] = useState(false);
 
-  const handleRun = () => setRunSignal((r) => r + 1);
+  const handleRun = () => setRunSignal(r => r + 1);
   const handleReset = () => {
-    setResetSignal((r) => r + 1);
-    setIsTracking(false); // Stop tracking when reset is clicked
+    setResetSignal(r => r + 1);
+    setIsTracking(false);
+    setSpiritFirstAnimationCompleted({});
+    setLocalSpirit(spirit);
   };
 
   function swapPaths(arr, input) {
-    // Clone the array to avoid in-place mutation (important for React)
     const cloned = arr.map(obj => ({ ...obj, path: [...obj.path] }));
-
-    // Create a map of name to index
     const nameToIndex = {};
     cloned.forEach((obj, idx) => {
       nameToIndex[obj.name] = idx;
     });
-
-    // Extract paths in input order
     const paths = input.map(name => {
       const idx = nameToIndex[name];
       return idx !== undefined ? cloned[idx].path : null;
     });
-
-    // Rotate the paths (i.e., assign each path to the next object in input)
     for (let i = 0; i < input.length; i++) {
       const currentName = input[i];
-      const nextPath = paths[(i + 1) % input.length]; // Wrap-around if needed
+      const nextPath = paths[(i + 1) % input.length];
       const idx = nameToIndex[currentName];
       if (idx !== undefined) {
         cloned[idx].path = nextPath;
       }
     }
-
     return cloned;
   }
 
-
   const checkIntersection = () => {
-    let intersectingSpirits = [];
     const positionMap = {};
-
-    // Group spirits by their position
-    spiritsPositions.forEach((spirit) => {
-      const positionKey = `${spirit.x},${spirit.y}`;
-      if (!positionMap[positionKey]) {
-        positionMap[positionKey] = [];
+    spiritsPositions.forEach(sp => {
+      const key = `${sp.x},${sp.y}`;
+      if (!positionMap[key]) {
+        positionMap[key] = [];
       }
-      positionMap[positionKey].push(spirit.name);
+      positionMap[key].push(sp.name);
     });
 
-    // Filter out spirits that share the same coordinates
-    Object.values(positionMap).forEach((spiritsAtPosition) => {
-      if (spiritsAtPosition.length > 1) {
-        intersectingSpirits.push(...spiritsAtPosition);
-      }
-    });
+    const intersectingSpirits = Object.values(positionMap)
+      .filter(group => group.length > 1)
+      .flat();
 
-    // Log the spirits that are intersecting
     if (intersectingSpirits.length > 0) {
-      let updatedspiritePath = swapPaths(spirit, intersectingSpirits); // this will now correctly return the updated array
-      // console.log(updatedspiritePath, 'Arun123'); // Log the updated spirits
-      spirit = updatedspiritePath
-    } else {
-      console.log("No spirits intersecting.");
+      const updatedSpirits = swapPaths(localSpirit, intersectingSpirits);
+      setLocalSpirit(updatedSpirits);
     }
   };
 
-  // Continuously check for intersections if tracking is enabled
   useEffect(() => {
-    if (isTracking) {
-      checkIntersection(); // Call intersection check directly when positions change
-    }
+    if (isTracking) checkIntersection();
   }, [spiritsPositions, isTracking]);
 
   useEffect(() => {
-    // Only check for intersections after all first animations are complete
-    if (Object.values(spiritFirstAnimationCompleted).every((completed) => completed)) {
-      setIsTracking(true); // Start tracking after first animation is completed for each spirit
+    if (Object.values(spiritFirstAnimationCompleted).every(Boolean)) {
+      setIsTracking(true);
     }
   }, [spiritFirstAnimationCompleted]);
 
   return (
     <div className="p-2 w-full h-full flex flex-col">
       <div className="flex gap-4 mb-2">
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded shadow"
-          onClick={handleRun}
-        >
+        <button className="bg-green-600 text-white px-4 py-2 rounded shadow" onClick={handleRun}>
           Run
         </button>
-        <button
-          className="bg-red-600 text-white px-4 py-2 rounded shadow"
-          onClick={handleReset}
-        >
+        <button className="bg-red-600 text-white px-4 py-2 rounded shadow" onClick={handleReset}>
           Reset
         </button>
       </div>
 
-      {/* Shared preview canvas */}
       <div className="relative flex-1 bg-gray-200 rounded shadow overflow-hidden">
-        {spirit.map((sprite, idx) => {
-          return (<SpiritPreview
+        {localSpirit.map((sprite, idx) => (
+          <SpiritPreview
             key={idx}
             sprite={sprite}
             runSignal={runSignal}
             resetSignal={resetSignal}
-            setSpiritsPositions={setSpiritsPositions} // Pass setter to update positions
-            spiritsPositions={spiritsPositions} // Pass current positions to check for intersections
-            setSpiritFirstAnimationCompleted={setSpiritFirstAnimationCompleted} // Pass setter to track first animation
-            spiritFirstAnimationCompleted={spiritFirstAnimationCompleted} // Pass the current state of animation completion
-          />)
-        })}
+            setSpiritsPositions={setSpiritsPositions}
+            spiritsPositions={spiritsPositions}
+            setSpiritFirstAnimationCompleted={setSpiritFirstAnimationCompleted}
+            spiritFirstAnimationCompleted={spiritFirstAnimationCompleted}
+          />
+        ))}
       </div>
     </div>
   );
@@ -134,20 +107,17 @@ const SpiritPreview = ({
   setSpiritFirstAnimationCompleted,
   spiritFirstAnimationCompleted,
 }) => {
-  console.log(sprite, 'Arun123')
   const [position, setPosition] = useState(CENTER);
   const [tooltip, setTooltip] = useState({ text: "", visible: false });
-  const [logPosition, setLogPosition] = useState(false); // Track if we should log the position
-  const spiritRef = useRef(null); // Reference to the spirit DOM element
+  const [logPosition, setLogPosition] = useState(false);
+  const spiritRef = useRef(null);
 
-  // Start logging position when "Run" is clicked
   useEffect(() => {
     if (runSignal > 0) {
       setLogPosition(true);
     }
   }, [runSignal]);
 
-  // Stop logging position when "Reset" is clicked
   useEffect(() => {
     if (resetSignal > 0) {
       setLogPosition(false);
@@ -231,7 +201,6 @@ const SpiritPreview = ({
         } else {
           scheduleBlock(block);
 
-          // Track the first animation for each spirit (after first animation)
           if (index === 0) {
             setSpiritFirstAnimationCompleted((prev) => ({
               ...prev,
@@ -256,19 +225,18 @@ const SpiritPreview = ({
     if (logPosition && spiritRef.current) {
       const rect = spiritRef.current.getBoundingClientRect();
 
-      // Update spirits positions by checking for name and x, y values
       setSpiritsPositions((prevPositions) => {
         const updatedPositions = prevPositions.filter((pos) => pos.name !== sprite.name);
         updatedPositions.push({ name: sprite.name, x: rect.x, y: rect.y });
-        return updatedPositions;  // Return the new updated positions array
+        return updatedPositions;
       });
     }
-  }, [position, logPosition]);  // Only log when position changes and logPosition is true
+  }, [position, logPosition]);
 
 
   return (
     <div
-      ref={spiritRef} // Attach the reference here
+      ref={spiritRef}
       className="absolute transition-transform duration-300"
       style={{
         width: "50px",

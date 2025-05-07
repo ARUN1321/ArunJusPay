@@ -46,7 +46,6 @@ const RepeatActChip = ({ data, index, spirit, name, updatedData }) => {
                     className="h-3 w-3 bg-red-500 text-white font-bold rounded-full flex items-center justify-center absolute cursor-pointer hover:bg-red-600"
                     onClick={(e) => {
                       e.stopPropagation();
-                      //   handleDelete(spiritActs.name, index);
                     }}
                     style={{ fontSize: "8px", top: "-5px", left: "-5px" }}
                   >

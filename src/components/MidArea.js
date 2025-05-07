@@ -14,7 +14,7 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
       accept: "insert",
       drop: (item, monitor) => {
         if (monitor.didDrop()) return;
-        setUpdatedPath((prev) => [...prev, item]); // Only handle if not nested
+        setUpdatedPath((prev) => [...prev, item]);
       },
       collect: (monitor) => ({ isOver: !!monitor.isOver() }),
     }),
