@@ -12,10 +12,10 @@ const PreviewArea = ({ spirit }) => {
 
   const handleRun = () => setRunSignal(r => r + 1);
   const handleReset = () => {
-    setResetSignal(r => r + 1);
+    setLocalSpirit(spirit);
+    setResetSignal(0);
     setIsTracking(false);
     setSpiritFirstAnimationCompleted({});
-    setLocalSpirit(spirit);
   };
 
   function swapPaths(arr, input) {
@@ -80,7 +80,7 @@ const PreviewArea = ({ spirit }) => {
         </button>
       </div>
 
-      <div className="relative flex-1 bg-gray-200 rounded shadow overflow-hidden">
+      <div className="relative flex-1 bg-gray-200 rounded shadow overflow-hidden" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {localSpirit.map((sprite, idx) => (
           <SpiritPreview
             key={idx}
