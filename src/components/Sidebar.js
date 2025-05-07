@@ -6,14 +6,37 @@ export default function Sidebar({ spirit, setSpirit, close, addSpiritAction }) {
   const [selectedSpirit, setSelectedSpirit] = useState();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [fileData, setFileData] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === "image/svg+xml") {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFileData(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert("Only SVG files are allowed.");
+    }
+  };
 
   const handleSpiritSubmit = () => {
-    if (!name || !url) return alert("Fill both the Fields.");
-    if (spirit.some((spirit) => spirit.name === name))
+    if (!name || !fileData) return alert("Fill both the fields.");
+    if (spirit.some((spirit) => spirit.name === name)) {
       return alert("Spirit name already exists!");
-    setSpirit((prev) => [...prev, { name, url, path: [] }]);
+    }
+
+    setSpirit((prev) => [
+      ...prev,
+      {
+        name,
+        url: fileData,
+        path: [],
+      },
+    ]);
     setName("");
-    setUrl("");
+    setFileData(null);
   };
 
   return (
@@ -32,14 +55,13 @@ export default function Sidebar({ spirit, setSpirit, close, addSpiritAction }) {
           ))}
         </div>
       ))}
-      <div style={{ borderTop: "5px solid", marginBottom: "4px" }}>
+      <div style={{ borderTop: "5px solid", marginBottom: "4px", width: '100%' }}>
         <h1 className="text-2xl mb-2 font-bold">SPIRITS</h1>
         <input
-          name="spirit_url"
-          className="w-full h-10 mb-3 p-1 border-2 rounded-md"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Enter Sprite Img Link"
+          type="file"
+          accept=".svg"
+          onChange={handleFileChange}
+          className="mb-3 w-full"
         />
         <input
           name="spirit_name"
@@ -63,7 +85,7 @@ export default function Sidebar({ spirit, setSpirit, close, addSpiritAction }) {
           overflowY: "scroll",
           gridTemplateColumns: "auto auto",
           gridTemplateRows: "repeat(auto-fill, 15%)",
-          gap: "5px",
+          gap: "20px",
         }}
       >
         {spirit.length > 0 ? (
@@ -71,22 +93,35 @@ export default function Sidebar({ spirit, setSpirit, close, addSpiritAction }) {
             <div
               key={index}
               onClick={() => {
-                setSelectedSpirit(index), addSpiritAction(index);
+                setSelectedSpirit(index);
+                addSpiritAction(index);
               }}
-              className={`w-full h-full rounded-md relative ${
-                selectedSpirit === index && "border-2 border-black"
-              }`}
+              className={`relative rounded-md p-1 cursor-pointer ${selectedSpirit === index ? "border-2 border-black" : ""
+                }`}
               style={{
-                backgroundImage: `url(${ele.url})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
+                width: "100%",
+                height: "80px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
               }}
             >
-              <h2 className="bg-blue-500 bg-opacity-70 text-center text-white font-bold mt-2 p-1">
-                {ele.name}
-              </h2>
-              <div
-                className="h-7 w-7 bg-red-500 text-white font-bold rounded-full flex items-center justify-center absolute cursor-pointer hover:bg-red-600"
+              <div className="w-[50px] h-[50px]">
+                {typeof ele.url === "string" ? (
+                  <img
+                    src={ele.url}
+                    alt={ele.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full">{ele.url}</div>
+                )}
+              </div>
+
+              {selectedSpirit === index && <div
+                className="h-7 w-7 bg-red-500 text-white font-bold rounded-full flex items-center justify-center absolute hover:bg-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedSpirit();
@@ -95,7 +130,7 @@ export default function Sidebar({ spirit, setSpirit, close, addSpiritAction }) {
                 style={{ top: "-5px", left: "-5px" }}
               >
                 X
-              </div>
+              </div>}
             </div>
           ))
         ) : (

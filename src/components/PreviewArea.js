@@ -239,16 +239,10 @@ const SpiritPreview = ({
       ref={spiritRef}
       className="absolute transition-transform duration-300"
       style={{
-        width: "50px",
-        height: "50px",
         transform: `translate(${position.x}px, ${position.y}px) rotate(${position.rotation}deg)`,
       }}
     >
-      <img
-        src={sprite.url}
-        alt={sprite.name}
-        className="w-full h-full"
-      />
+      <>{sprite.url}</>
       {tooltip.visible && (
         <div className="absolute top-0 left-0 bg-white px-2 py-1 rounded shadow text-sm whitespace-nowrap">
           {tooltip.text}

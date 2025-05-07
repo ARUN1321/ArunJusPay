@@ -4,18 +4,22 @@ import MidArea from "./components/MidArea";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import PreviewArea from "./components/PreviewArea";
 import { DndProvider } from "react-dnd";
+import CatSprite from './components/CatSprite';
+import DogSprite from './components/DogSprite';
 
 export default function App() {
   const [spiritActs, setSpiritActs] = useState();
   const [spirit, setSpirit] = useState([
     {
-      name: "bitcoin",
-      url: "https://www.seekpng.com/png/detail/9-92064_sticker-2-bitcoin-store-bitcoin-b.png",
+      name: "Cat",
+      url: <CatSprite width={"95.17898101806641"}
+        height={"100.04156036376953"} />,
       path: [],
     },
     {
-      name: "cat",
-      url: "https://www.seekpng.com/png/detail/21-218274_grenade-granada-pubg-game-jogo-pubg-grenade-png.png",
+      name: "Dog",
+      url: <DogSprite width={"95.17898101806641"}
+        height={"100.04156036376953"} />,
       path: [],
     },
   ]);
