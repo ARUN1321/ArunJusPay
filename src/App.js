@@ -66,7 +66,7 @@ export default function App() {
             {mainContent}
           </div>
           <div className="w-1/3 h-full overflow-hidden flex bg-white border-t border-l border-gray-200 rounded-tl-xl ml-2">
-            <PreviewArea spirit={spirit} />
+            <PreviewArea spirits={spirit} />
           </div>
         </div>
       </div>

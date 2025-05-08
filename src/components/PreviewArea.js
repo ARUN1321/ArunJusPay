@@ -1,253 +1,211 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
-const CENTER = { x: 0, y: 0, rotation: 0 };
+const PreviewArea = ({ spirits }) => {
+  const previewAreaRef = useRef(null);
+  const [running, setRunning] = useState(false);
+  const [positions, setPositions] = useState(
+    spirits.map(() => ({ x: 0, y: 0 }))
+  );
+  const [rotations, setRotations] = useState(spirits.map(() => 0));
+  const [speech, setSpeech] = useState(
+    spirits.map(() => ({ text: "", index: null }))
+  );
 
-const PreviewArea = ({ spirit }) => {
-  const [localSpirit, setLocalSpirit] = useState(spirit);
-  const [runSignal, setRunSignal] = useState(0);
-  const [resetSignal, setResetSignal] = useState(0);
-  const [spiritsPositions, setSpiritsPositions] = useState([]);
-  const [spiritFirstAnimationCompleted, setSpiritFirstAnimationCompleted] = useState({});
-  const [isTracking, setIsTracking] = useState(false);
+  useEffect(() => {
+    setPositions((prev) => spirits.map((_, i) => prev[i] || { x: 0, y: 0 }));
+    setRotations((prev) => spirits.map((_, i) => prev[i] || 0));
+    setSpeech((prev) => spirits.map((_, i) => prev[i] || { text: "", index: null }));
+  }, [spirits]);
 
-  const handleRun = () => setRunSignal(r => r + 1);
+  const runSequence = async () => {
+    const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+    const runAction = async (action, index) => {
+      const previewArea = previewAreaRef.current;
+      const previewWidth = previewArea.offsetWidth;
+      const previewHeight = previewArea.offsetHeight;
+
+      const clampPosition = (x, y) => {
+        const spiritSize = 64;
+        const clampedX = Math.min(Math.max(x, 0), previewWidth - spiritSize);
+        const clampedY = Math.min(Math.max(y, 0), previewHeight - spiritSize);
+        return { x: clampedX, y: clampedY };
+      };
+
+      switch (action.active) {
+        case "move":
+          setPositions((prev) => {
+            const newPos = [...prev];
+            const newPosClamped = clampPosition(
+              prev[index].x + (action.cord?.x || 0),
+              prev[index].y + (action.cord?.y || 0)
+            );
+            newPos[index] = newPosClamped;
+            return newPos;
+          });
+          await delay(500);
+          break;
+
+        case "rotateClockWise":
+          setRotations((prev) => {
+            const newRot = [...prev];
+            newRot[index] = prev[index] + (action.rotate || 0);
+            return newRot;
+          });
+          await delay(300);
+          break;
+
+        case "rotateAntiClock":
+          setRotations((prev) => {
+            const newRot = [...prev];
+            newRot[index] = prev[index] - (action.rotate || 0);
+            return newRot;
+          });
+          await delay(300);
+          break;
+
+        case "goToXY":
+          setPositions((prev) => {
+            const newPos = [...prev];
+            const newPosClamped = clampPosition(action.cord?.x || 0, action.cord?.y || 0);
+            newPos[index] = newPosClamped;
+            return newPos;
+          });
+          await delay(500);
+          break;
+
+        case "Say":
+        case "Think":
+          setSpeech((prev) => {
+            const newSpeech = [...prev];
+            newSpeech[index] = { text: action.text, index };
+            return newSpeech;
+          });
+          await delay((action.time || 1) * 1000);
+          setSpeech((prev) => {
+            const newSpeech = [...prev];
+            newSpeech[index] = { text: "", index: null };
+            return newSpeech;
+          });
+          break;
+
+        case "Repeat":
+          for (let i = 0; i < action.count; i++) {
+            for (let child of action.children || []) {
+              await runAction(child.action, index);
+            }
+          }
+          break;
+
+        default:
+          break;
+      }
+    };
+
+    const promises = spirits.map((spirit, spiritIndex) => {
+      return spirit.path.map((action, actionIndex) => {
+        return runAction(action.action, spiritIndex);
+      });
+    });
+
+    await Promise.all(promises.flat());
+
+    setRunning(false);
+  };
+
+  const handleRun = () => {
+    if (!spirits || spirits.length === 0) return;
+    setRunning(true);
+    runSequence();
+  };
+
   const handleReset = () => {
-    setLocalSpirit(spirit);
-    setResetSignal(0);
-    setIsTracking(false);
-    setSpiritFirstAnimationCompleted({});
+    setPositions(spirits.map(() => ({ x: 0, y: 0 })));
+    setRotations(spirits.map(() => 0));
+    setSpeech(spirits.map(() => ({ text: "", index: null })));
+    setRunning(false);
   };
-
-  function swapPaths(arr, input) {
-    const cloned = arr.map(obj => ({ ...obj, path: [...obj.path] }));
-    const nameToIndex = {};
-    cloned.forEach((obj, idx) => {
-      nameToIndex[obj.name] = idx;
-    });
-    const paths = input.map(name => {
-      const idx = nameToIndex[name];
-      return idx !== undefined ? cloned[idx].path : null;
-    });
-    for (let i = 0; i < input.length; i++) {
-      const currentName = input[i];
-      const nextPath = paths[(i + 1) % input.length];
-      const idx = nameToIndex[currentName];
-      if (idx !== undefined) {
-        cloned[idx].path = nextPath;
-      }
-    }
-    return cloned;
-  }
-
-  const checkIntersection = () => {
-    const positionMap = {};
-    spiritsPositions.forEach(sp => {
-      const key = `${sp.x},${sp.y}`;
-      if (!positionMap[key]) {
-        positionMap[key] = [];
-      }
-      positionMap[key].push(sp.name);
-    });
-
-    const intersectingSpirits = Object.values(positionMap)
-      .filter(group => group.length > 1)
-      .flat();
-
-    if (intersectingSpirits.length > 0) {
-      const updatedSpirits = swapPaths(localSpirit, intersectingSpirits);
-      setLocalSpirit(updatedSpirits);
-    }
-  };
-
-  useEffect(() => {
-    if (isTracking) checkIntersection();
-  }, [spiritsPositions, isTracking]);
-
-  useEffect(() => {
-    if (Object.values(spiritFirstAnimationCompleted).every(Boolean)) {
-      setIsTracking(true);
-    }
-  }, [spiritFirstAnimationCompleted]);
 
   return (
-    <div className="p-2 w-full h-full flex flex-col">
-      <div className="flex gap-4 mb-2">
-        <button className="bg-green-600 text-white px-4 py-2 rounded shadow" onClick={handleRun}>
+    <div
+      className="p-4 w-full h-full flex flex-col items-center justify-start bg-gray-100 rounded-md relative"
+      style={{ overflow: "hidden" }}
+      ref={previewAreaRef}
+    >
+      <div className="mb-4 flex gap-4">
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={handleRun}
+          disabled={running}
+        >
           Run
         </button>
-        <button className="bg-red-600 text-white px-4 py-2 rounded shadow" onClick={handleReset}>
+        <button
+          className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+          onClick={handleReset}
+        >
           Reset
         </button>
       </div>
 
-      <div className="relative flex-1 bg-gray-200 rounded shadow overflow-hidden" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        {localSpirit.map((sprite, idx) => (
-          <SpiritPreview
-            key={idx}
-            sprite={sprite}
-            runSignal={runSignal}
-            resetSignal={resetSignal}
-            setSpiritsPositions={setSpiritsPositions}
-            spiritsPositions={spiritsPositions}
-            setSpiritFirstAnimationCompleted={setSpiritFirstAnimationCompleted}
-            spiritFirstAnimationCompleted={spiritFirstAnimationCompleted}
-          />
-        ))}
+      <div className="relative w-full h-full flex items-center justify-center">
+        {spirits.map((spirit, index) => {
+          const pos = positions[index] || { x: 0, y: 0 };
+          const rot = rotations[index] || 0;
+
+          return (
+            <div
+              key={index}
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: `translate(${pos.x}px, ${-pos.y}px)`,
+                transition: "transform 0.5s ease",
+                width: "64px",
+                height: "64px",
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  transform: `translate(-50%, -50%) rotate(${rot}deg)`,
+                  transformOrigin: "center",
+                  backgroundImage:
+                    typeof spirit.url === "string" ? `url(${spirit.url})` : undefined,
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: "contain",
+                  backgroundPosition: "center",
+                }}
+              >
+                {typeof spirit.url !== "string" ? spirit.url : null}
+
+                {/* ✅ Safe speech check */}
+                {speech[index] && speech[index].text && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "80px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      backgroundColor: "white",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                      whiteSpace: "nowrap",
+                      zIndex: 10,
+                    }}
+                  >
+                    {speech[index].text}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
-  );
-};
-
-const SpiritPreview = ({
-  sprite,
-  runSignal,
-  resetSignal,
-  setSpiritsPositions,
-  spiritsPositions,
-  setSpiritFirstAnimationCompleted,
-  spiritFirstAnimationCompleted,
-}) => {
-  const [position, setPosition] = useState(CENTER);
-  const [tooltip, setTooltip] = useState({ text: "", visible: false });
-  const [logPosition, setLogPosition] = useState(false);
-  const spiritRef = useRef(null);
-
-  useEffect(() => {
-    if (runSignal > 0) {
-      setLogPosition(true);
-    }
-  }, [runSignal]);
-
-  useEffect(() => {
-    if (resetSignal > 0) {
-      setLogPosition(false);
-    }
-  }, [resetSignal]);
-
-  useEffect(() => {
-    let timeouts = [];
-    let delay = 0;
-
-    const scheduleBlock = (block) => {
-      const { active } = block.action || {};
-
-      const timeout = setTimeout(() => {
-        switch (active) {
-          case "move":
-            setPosition((prev) => ({
-              ...prev,
-              x: prev.x + (block.action.cord?.x || 0),
-              y: prev.y + (block.action.cord?.y || 0),
-            }));
-            break;
-          case "rotateClockWise":
-            setPosition((prev) => {
-              const newRotation = prev.rotation + block.action.rotate;
-              const newX = prev.x + Math.cos((newRotation * Math.PI) / 180) * 10;
-              const newY = prev.y + Math.sin((newRotation * Math.PI) / 180) * 10;
-              return {
-                ...prev,
-                rotation: newRotation,
-                x: newX,
-                y: newY,
-              };
-            });
-            break;
-          case "rotateAntiClock":
-            setPosition((prev) => {
-              const newRotation = prev.rotation - block.action.rotate;
-              const newX = prev.x + Math.cos((newRotation * Math.PI) / 180) * 10;
-              const newY = prev.y + Math.sin((newRotation * Math.PI) / 180) * 10;
-              return {
-                ...prev,
-                rotation: newRotation,
-                x: newX,
-                y: newY,
-              };
-            });
-            break;
-          case "goToXY":
-            setPosition((prev) => ({
-              ...prev,
-              x: block.action.cord?.x || 0,
-              y: block.action.cord?.y || 0,
-            }));
-            break;
-          case "Say":
-          case "Think":
-            const text = block.action.text;
-            const duration = Math.max((block.action.time || 1), 1) * 1000;
-            setTooltip({ text, visible: true });
-            const hide = setTimeout(() => {
-              setTooltip({ text: "", visible: false });
-            }, duration);
-            timeouts.push(hide);
-            break;
-          default:
-            break;
-        }
-      }, delay);
-
-      timeouts.push(timeout);
-      delay += 600;
-    };
-
-    const walkBlocks = (blocks) => {
-      blocks.forEach((block, index) => {
-        if (block.action?.active === "Repeat") {
-          for (let i = 0; i < block.action.count; i++) {
-            walkBlocks(block.action.children);
-          }
-        } else {
-          scheduleBlock(block);
-
-          if (index === 0) {
-            setSpiritFirstAnimationCompleted((prev) => ({
-              ...prev,
-              [sprite.name]: true,
-            }));
-          }
-        }
-      });
-    };
-
-    walkBlocks(sprite.path);
-
-    return () => timeouts.forEach(clearTimeout);
-  }, [runSignal, sprite, setSpiritFirstAnimationCompleted]);
-
-  useEffect(() => {
-    setPosition(CENTER);
-    setTooltip({ text: "", visible: false });
-  }, [resetSignal]);
-
-  useEffect(() => {
-    if (logPosition && spiritRef.current) {
-      const rect = spiritRef.current.getBoundingClientRect();
-
-      setSpiritsPositions((prevPositions) => {
-        const updatedPositions = prevPositions.filter((pos) => pos.name !== sprite.name);
-        updatedPositions.push({ name: sprite.name, x: rect.x, y: rect.y });
-        return updatedPositions;
-      });
-    }
-  }, [position, logPosition]);
-
-
-  return (
-    <div
-      ref={spiritRef}
-      className="absolute transition-transform duration-300"
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px) rotate(${position.rotation}deg)`,
-      }}
-    >
-      <>{sprite.url}</>
-      {tooltip.visible && (
-        <div className="absolute top-0 left-0 bg-white px-2 py-1 rounded shadow text-sm whitespace-nowrap">
-          {tooltip.text}
-        </div>
-      )}
     </div>
   );
 };
