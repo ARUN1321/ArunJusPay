@@ -9,7 +9,6 @@ export default function MidArea({ spirit, setSpirit, spiritActs }) {
     setUpdatedPath([...spiritActs?.path]);
   }, [spiritActs]);
 
-  // 🧠 Automatically sync `updatedPath` into `spirit` whenever it changes
   useEffect(() => {
     setSpirit((prevSpirits) =>
       prevSpirits.map((ele) =>

@@ -181,8 +181,6 @@ const PreviewArea = ({ spirits }) => {
                 }}
               >
                 {typeof spirit.url !== "string" ? spirit.url : null}
-
-                {/* ✅ Safe speech check */}
                 {speech[index] && speech[index].text && (
                   <div
                     style={{
