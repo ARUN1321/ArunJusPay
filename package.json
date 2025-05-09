@@ -12,7 +12,6 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.3.1",
-    "react-sprite-animator": "^2.0.2",
     "tailwindcss": "^2.0.1"
   },
   "devDependencies": {
