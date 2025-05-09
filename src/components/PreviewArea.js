@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 
 const PreviewArea = ({ spirits }) => {
+  console.log(spirits,'Arun123')
   const previewAreaRef = useRef(null);
   const [running, setRunning] = useState(false);
   const [positions, setPositions] = useState(
@@ -27,8 +28,16 @@ const PreviewArea = ({ spirits }) => {
 
       const clampPosition = (x, y) => {
         const spiritSize = 64;
-        const clampedX = Math.min(Math.max(x, 0), previewWidth - spiritSize);
-        const clampedY = Math.min(Math.max(y, 0), previewHeight - spiritSize);
+        const halfWidth = previewWidth / 2;
+        const halfHeight = previewHeight / 2;
+    
+        const minX = -halfWidth + spiritSize / 2;
+        const maxX = halfWidth - spiritSize / 2;
+        const minY = -halfHeight + spiritSize / 2;
+        const maxY = halfHeight - spiritSize / 2;
+    
+        const clampedX = Math.min(Math.max(x, minX), maxX);
+        const clampedY = Math.min(Math.max(y, minY), maxY);
         return { x: clampedX, y: clampedY };
       };
 
