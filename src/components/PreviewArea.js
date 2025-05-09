@@ -1,16 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 
 const PreviewArea = ({ spirits }) => {
-  console.log(spirits,'Arun123')
   const previewAreaRef = useRef(null);
   const [running, setRunning] = useState(false);
-  const [positions, setPositions] = useState(
-    spirits.map(() => ({ x: 0, y: 0 }))
-  );
+  const [positions, setPositions] = useState(spirits.map(() => ({ x: 0, y: 0 })));
   const [rotations, setRotations] = useState(spirits.map(() => 0));
-  const [speech, setSpeech] = useState(
-    spirits.map(() => ({ text: "", index: null }))
-  );
+  const [speech, setSpeech] = useState(spirits.map(() => ({ text: "", index: null })));
 
   useEffect(() => {
     setPositions((prev) => spirits.map((_, i) => prev[i] || { x: 0, y: 0 }));
@@ -18,8 +13,40 @@ const PreviewArea = ({ spirits }) => {
     setSpeech((prev) => spirits.map((_, i) => prev[i] || { text: "", index: null }));
   }, [spirits]);
 
+  const getPairKey = (i, j) => `${Math.min(i, j)}-${Math.max(i, j)}`;
+
+  const handleCollisionSwap = (indexA, indexB) => {
+    setPositions((prev) => {
+      const newPos = [...prev];
+      [newPos[indexA], newPos[indexB]] = [newPos[indexB], newPos[indexA]];
+      return newPos;
+    });
+    setRotations((prev) => {
+      const newRot = [...prev];
+      [newRot[indexA], newRot[indexB]] = [newRot[indexB], newRot[indexA]];
+      return newRot;
+    });
+  };
+
+  const checkCollisionsAndSwap = (handledCollisions) => {
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        const dx = positions[i].x - positions[j].x;
+        const dy = positions[i].y - positions[j].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        const pairKey = getPairKey(i, j);
+        if (distance < 64 && !handledCollisions.has(pairKey)) {
+          handleCollisionSwap(i, j);
+          handledCollisions.add(pairKey);
+        }
+      }
+    }
+  };
+
   const runSequence = async () => {
     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+    const handledCollisions = new Set();
 
     const runAction = async (action, index) => {
       const previewArea = previewAreaRef.current;
@@ -30,35 +57,34 @@ const PreviewArea = ({ spirits }) => {
         const spiritSize = 64;
         const halfWidth = previewWidth / 2;
         const halfHeight = previewHeight / 2;
-    
         const minX = -halfWidth + spiritSize / 2;
         const maxX = halfWidth - spiritSize / 2;
         const minY = -halfHeight + spiritSize / 2;
         const maxY = halfHeight - spiritSize / 2;
-    
-        const clampedX = Math.min(Math.max(x, minX), maxX);
-        const clampedY = Math.min(Math.max(y, minY), maxY);
-        return { x: clampedX, y: clampedY };
+        return {
+          x: Math.min(Math.max(x, minX), maxX),
+          y: Math.min(Math.max(y, minY), maxY),
+        };
       };
 
       switch (action.active) {
         case "move":
           setPositions((prev) => {
             const newPos = [...prev];
-            const newPosClamped = clampPosition(
+            newPos[index] = clampPosition(
               prev[index].x + (action.cord?.x || 0),
               prev[index].y + (action.cord?.y || 0)
             );
-            newPos[index] = newPosClamped;
             return newPos;
           });
           await delay(500);
+          checkCollisionsAndSwap(handledCollisions);
           break;
 
         case "rotateClockWise":
           setRotations((prev) => {
             const newRot = [...prev];
-            newRot[index] = prev[index] + (action.rotate || 0);
+            newRot[index] += action.rotate || 0;
             return newRot;
           });
           await delay(300);
@@ -67,7 +93,7 @@ const PreviewArea = ({ spirits }) => {
         case "rotateAntiClock":
           setRotations((prev) => {
             const newRot = [...prev];
-            newRot[index] = prev[index] - (action.rotate || 0);
+            newRot[index] -= action.rotate || 0;
             return newRot;
           });
           await delay(300);
@@ -76,11 +102,11 @@ const PreviewArea = ({ spirits }) => {
         case "goToXY":
           setPositions((prev) => {
             const newPos = [...prev];
-            const newPosClamped = clampPosition(action.cord?.x || 0, action.cord?.y || 0);
-            newPos[index] = newPosClamped;
+            newPos[index] = clampPosition(action.cord?.x || 0, action.cord?.y || 0);
             return newPos;
           });
           await delay(500);
+          checkCollisionsAndSwap(handledCollisions);
           break;
 
         case "Say":
@@ -111,14 +137,11 @@ const PreviewArea = ({ spirits }) => {
       }
     };
 
-    const promises = spirits.map((spirit, spiritIndex) => {
-      return spirit.path.map((action, actionIndex) => {
-        return runAction(action.action, spiritIndex);
-      });
-    });
+    const promises = spirits.map((spirit, spiritIndex) =>
+      spirit.path.map((action) => runAction(action.action, spiritIndex))
+    );
 
     await Promise.all(promises.flat());
-
     setRunning(false);
   };
 
